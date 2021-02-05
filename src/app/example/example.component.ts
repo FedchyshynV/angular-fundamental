@@ -1,10 +1,45 @@
 import { Overlay, ScrollStrategy } from "@angular/cdk/overlay";
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, ViewEncapsulation } from "@angular/core";
+import {
+  DateRange,
+  DatetimeAdapter,
+DateTimeFormats,
+DATE_TIME_FORMATS,
+  FdDate,
+  FdDatetimeAdapter,
+FD_DATETIME_FORMATS
+} from "@fundamental-ngx/core";
+
+export const CUSTOM_FD_DATETIME_FORMATS: DateTimeFormats = {
+    ...FD_DATETIME_FORMATS,
+    display: {
+        ...FD_DATETIME_FORMATS.display,
+        dateTimeInput: {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }
+    }
+};
 
 @Component({
   selector: "app-example",
   templateUrl: "./example.component.html",
-  styleUrls: ["./example.component.scss"]
+  styleUrls: ["./example.component.scss"],
+  encapsulation: ViewEncapsulation.ShadowDom,
+  providers: [
+    {
+      provide: DatetimeAdapter,
+      useClass: FdDatetimeAdapter
+    },
+            {
+            provide: DATE_TIME_FORMATS,
+            useValue: CUSTOM_FD_DATETIME_FORMATS
+        }
+  ]
 })
 export class ExampleComponent implements OnInit {
   options: string[] = ["Apple", "Pineapple", "Tomato", "Strawberry"];
@@ -17,6 +52,7 @@ export class ExampleComponent implements OnInit {
   closeScrollStrategy: ScrollStrategy;
   repositionScrollStrategy: ScrollStrategy;
   autoClose = false;
+  selectedRange: DateRange<FdDate>;
 
   /** Whether to close the overlay once the user has scrolled away completely. */
   list1 = [
@@ -76,7 +112,16 @@ export class ExampleComponent implements OnInit {
     }
   };
 
-  constructor(private overlay: Overlay) {}
+  constructor(
+    private overlay: Overlay,
+    private datetimeAdapter: DatetimeAdapter<FdDate>
+  ) {
+    const today = this.datetimeAdapter.today();
+    this.selectedRange = new DateRange(
+      today,
+      this.datetimeAdapter.addCalendarDays(today, 1)
+    );
+  }
 
   ngOnInit(): void {
     this.closeScrollStrategy = this.overlay.scrollStrategies.close();
